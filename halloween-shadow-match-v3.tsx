@@ -1,0 +1,800 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Ghost, Trophy, Users, Play, RotateCcw, Star, Zap, Brain, BookOpen, Eye, EyeOff, Palette, Sparkles } from 'lucide-react';
+
+const GAME_ITEMS = [
+  { id: 1, name: 'Jack-o-lantern', emoji: '🎃', category: 'Classic', color: '#FF6B35', 
+    shadow: 'M50 10 C20 10 5 25 5 45 C5 70 20 90 50 90 C80 90 95 70 95 45 C95 25 80 10 50 10 M30 35 L40 45 L30 55 M60 35 L70 45 L60 55 M25 70 Q50 75 75 70' },
+  { id: 2, name: 'Witch on Broomstick', emoji: '🧹', category: 'Classic', color: '#8B4789',
+    shadow: 'M40 20 Q35 10 30 15 L25 25 Q30 30 35 25 L40 30 L45 25 L50 35 L45 40 L40 45 L35 50 L30 55 L25 60 M45 45 L60 50 L75 48 L85 46 M65 48 L67 52 M72 47 L74 51 M79 46 L81 50' },
+  { id: 3, name: 'Ghost', emoji: '👻', category: 'Classic', color: '#F0F0F0',
+    shadow: 'M50 20 Q30 20 20 35 Q10 50 15 70 L15 85 L20 80 L25 85 L30 80 L35 85 L40 80 L45 85 L50 80 L55 85 L60 80 L65 85 L70 80 L75 85 L80 80 L85 85 L85 70 Q90 50 80 35 Q70 20 50 20 M35 40 Q35 35 40 35 Q45 35 45 40 Q45 45 40 45 Q35 45 35 40 M55 40 Q55 35 60 35 Q65 35 65 40 Q65 45 60 45 Q55 45 55 40 M42 55 Q50 60 58 55' },
+  { id: 4, name: 'Black Cat', emoji: '🐈‍⬛', category: 'Classic', color: '#1A1A1A',
+    shadow: 'M20 30 L15 20 L25 25 L30 15 L32 25 L40 22 L38 30 L45 35 L40 45 L45 55 L40 70 L35 85 L30 70 L25 85 L20 70 L15 85 L12 70 L15 55 L10 45 L15 35 Z M70 30 L75 20 L85 25 L80 35 L85 45 L80 55 L85 70 L80 80 L75 70 L70 80 L68 70 L70 55 L65 45 L70 35 Z M30 35 Q45 30 60 35 L55 40 Q50 38 45 40 Z' },
+  { id: 5, name: 'Bat', emoji: '🦇', category: 'Classic', color: '#4A148C',
+    shadow: 'M50 45 Q48 40 45 42 L35 38 L25 42 L15 50 L10 58 L12 62 L20 58 L25 55 L30 58 L35 52 L40 50 L45 48 L48 50 L50 48 L52 50 L55 48 L60 50 L65 52 L70 58 L75 55 L80 58 L88 62 L90 58 L85 50 L75 42 L65 38 L55 42 Q52 40 50 45 M48 50 Q48 48 50 48 Q52 48 52 50 Q52 52 50 52 Q48 52 48 50' },
+  { id: 6, name: 'Haunted House', emoji: '🏚️', category: 'Classic', color: '#5D4E37',
+    shadow: 'M50 10 L70 25 L70 20 L75 20 L75 28 L85 35 L85 90 L60 90 L60 70 L40 70 L40 90 L15 90 L15 35 Z M30 45 L40 45 L40 55 L30 55 Z M60 45 L70 45 L70 55 L60 55 Z M44 50 L46 50 L46 60 L44 60 Z M54 50 L56 50 L56 60 L54 60 Z M48 65 Q50 68 52 65 L52 75 L48 75 Z' },
+  { id: 7, name: 'Skeleton', emoji: '💀', category: 'Classic', color: '#E8E8E8',
+    shadow: 'M50 15 Q40 15 35 22 Q30 30 30 38 Q30 45 35 50 L32 55 L35 60 L32 65 L35 70 L32 75 L35 80 L30 95 L35 95 L40 82 L45 95 L50 82 L55 95 L60 82 L65 95 L70 95 L65 80 L68 75 L65 70 L68 65 L65 60 L68 55 L65 50 Q70 45 70 38 Q70 30 65 22 Q60 15 50 15 M40 28 Q40 25 43 25 Q46 25 46 28 Q46 31 43 31 Q40 31 40 28 M54 28 Q54 25 57 25 Q60 25 60 28 Q60 31 57 31 Q54 31 54 28 M43 38 L57 38 L55 42 L45 42 Z' },
+  { id: 8, name: 'Spider', emoji: '🕷️', category: 'Classic', color: '#2C2C2C',
+    shadow: 'M50 45 Q45 45 42 48 Q40 52 42 56 Q45 60 50 60 Q55 60 58 56 Q60 52 58 48 Q55 45 50 45 M35 35 L25 25 L20 30 M38 40 L28 30 L23 35 M42 44 L35 38 L30 42 M58 44 L65 38 L70 42 M62 40 L72 30 L77 35 M65 35 L75 25 L80 30 M35 55 L25 65 L20 60 M38 58 L28 68 L23 63 M42 60 L35 68 L30 63 M58 60 L65 68 L70 63 M62 58 L72 68 L77 63 M65 55 L75 65 L80 60' },
+  { id: 9, name: 'Vampire', emoji: '🧛', category: 'Creatures', color: '#8B0000',
+    shadow: 'M50 15 Q40 15 35 22 L30 18 L28 25 Q25 35 25 45 L25 70 L30 85 L35 95 L40 85 L45 95 L50 88 L55 95 L60 85 L65 95 L70 85 L75 70 L75 45 Q75 35 72 25 L70 18 L65 22 Q60 15 50 15 M38 35 Q38 32 40 32 Q42 32 42 35 Q42 38 40 38 Q38 38 38 35 M58 35 Q58 32 60 32 Q62 32 62 35 Q62 38 60 38 Q58 38 58 35 M40 55 L35 58 M60 55 L65 58' },
+  { id: 10, name: 'Zombie', emoji: '🧟', category: 'Creatures', color: '#6B8E23',
+    shadow: 'M50 20 Q42 20 37 25 Q32 32 32 40 L30 50 L28 60 L30 72 L32 82 L35 92 L40 88 L45 92 L50 88 L55 92 L60 88 L65 92 L68 82 L70 72 L72 60 L70 50 L68 40 Q68 32 63 25 Q58 20 50 20 M40 38 L42 36 L44 38 M56 38 L58 36 L60 38 M40 48 L48 52 M52 52 L60 48 M42 62 Q50 64 58 62' },
+  { id: 11, name: 'Mummy', emoji: '🤕', category: 'Creatures', color: '#DEB887',
+    shadow: 'M50 18 Q42 18 37 23 L35 28 L40 30 L38 34 L43 36 L41 40 L32 42 L30 50 L32 58 L28 65 L30 72 L35 78 L33 85 L38 90 L40 92 L45 88 L50 92 L55 88 L60 92 L62 90 L67 85 L65 78 L70 72 L72 65 L68 58 L70 50 L68 42 L59 40 L57 36 L62 34 L60 30 L65 28 L63 23 Q58 18 50 18 M40 35 L42 33 L44 35 M56 35 L58 33 L60 35' },
+  { id: 12, name: 'Werewolf', emoji: '🐺', category: 'Creatures', color: '#8B7355',
+    shadow: 'M35 20 L30 15 L32 25 L28 30 Q25 38 28 45 L25 55 L28 65 L30 75 L25 88 L30 90 L35 78 L40 88 L45 78 L50 88 L55 78 L60 88 L65 78 L70 90 L75 88 L70 75 L72 65 L75 55 L72 45 Q75 38 72 30 L68 25 L70 15 L65 20 L62 25 L58 22 Q50 18 42 22 L38 25 Z M38 42 Q38 38 42 38 Q46 38 46 42 Q46 46 42 46 Q38 46 38 42 M54 42 Q54 38 58 38 Q62 38 62 42 Q62 46 58 46 Q54 46 54 42 M42 52 L50 58 L58 52' },
+  { id: 13, name: 'Candy Corn', emoji: '🍬', category: 'Treats', color: '#FF8C00',
+    shadow: 'M50 15 L35 45 L30 55 L28 65 L30 75 Q35 85 50 85 Q65 85 70 75 L72 65 L70 55 L65 45 Z M38 48 L62 48 M35 58 L65 58 M33 68 L67 68' },
+  { id: 14, name: 'Lollipop', emoji: '🍭', category: 'Treats', color: '#FF69B4',
+    shadow: 'M50 20 Q38 20 30 28 Q22 36 22 48 Q22 60 30 68 Q38 76 50 76 Q62 76 70 68 Q78 60 78 48 Q78 36 70 28 Q62 20 50 20 M35 35 Q40 30 50 30 Q60 30 65 35 M35 48 Q40 43 50 43 Q60 43 65 48 M35 61 Q40 56 50 56 Q60 56 65 61 M48 76 L48 92 L52 92 L52 76' },
+  { id: 15, name: 'Witch Hat', emoji: '🎩', category: 'Accessories', color: '#4B0082',
+    shadow: 'M50 10 L42 35 L35 35 L40 40 L38 45 L15 50 L12 55 L12 60 L88 60 L88 55 L85 50 L62 45 L60 40 L65 35 L58 35 Z M45 38 L55 38 L54 42 L46 42 Z' },
+  { id: 16, name: 'Monster Mask', emoji: '😈', category: 'Accessories', color: '#DC143C',
+    shadow: 'M30 25 L25 20 L28 28 Q25 35 25 42 L22 50 L25 58 Q28 65 35 68 L40 72 L50 75 L60 72 L65 68 Q72 65 75 58 L78 50 L75 42 Q75 35 72 28 L75 20 L70 25 L65 28 Q58 25 50 25 Q42 25 35 28 Z M38 42 Q38 38 42 38 Q46 38 46 42 Q46 46 42 46 Q38 46 38 42 M54 42 Q54 38 58 38 Q62 38 62 42 Q62 46 58 46 Q54 46 54 42 M40 55 L45 58 L50 56 L55 58 L60 55' }
+];
+
+const HALLOWEEN_STORIES = [
+  {
+    title: "The Haunted Mansion Mystery",
+    story: "On a dark Halloween night, brave trick-or-treaters approached the old HAUNTED HOUSE on the hill. A WITCH ON BROOMSTICK flew overhead, cackling as her BLACK CAT hissed below. Inside, a friendly GHOST floated through the halls, while a SKELETON rattled in the closet. In the kitchen, a bubbling cauldron revealed a JACK-O-LANTERN grinning wickedly. As midnight approached, a VAMPIRE emerged from the shadows, and BATS filled the moonlit sky. The children grabbed their CANDY CORN and ran home safely!",
+    items: ['Haunted House', 'Witch on Broomstick', 'Black Cat', 'Ghost', 'Skeleton', 'Jack-o-lantern', 'Vampire', 'Bat', 'Candy Corn']
+  },
+  {
+    title: "Trick-or-Treat Adventure",
+    story: "Little Emma wore her WITCH HAT proudly as she carried her trick-or-treat bag. She knocked on the first door where a ZOMBIE greeted her with candy. At the next house, a MUMMY handed her a LOLLIPOP. Suddenly, a WEREWOLF howled in the distance! Emma wasn't scared though - she saw it was just her neighbor in a costume with a MONSTER MASK. A SPIDER crawled on a web nearby, and BATS flew overhead. She collected her treats and headed home happy!",
+    items: ['Witch Hat', 'Zombie', 'Mummy', 'Lollipop', 'Werewolf', 'Monster Mask', 'Spider', 'Bat']
+  }
+];
+
+// Sound effect functions using Web Audio API
+const playSound = (frequency, duration, type = 'sine') => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = type;
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+};
+
+const playCorrectSound = () => {
+  playSound(523.25, 0.1);
+  setTimeout(() => playSound(659.25, 0.1), 100);
+  setTimeout(() => playSound(783.99, 0.2), 200);
+};
+
+const playWrongSound = () => {
+  playSound(200, 0.15, 'sawtooth');
+  setTimeout(() => playSound(150, 0.2, 'sawtooth'), 150);
+};
+
+// Component to render shadow silhouette - same size as emoji but black
+const ShadowSilhouette = ({ item, size = 'large' }) => {
+  const sizeClasses = {
+    small: 'text-4xl',
+    medium: 'text-5xl',
+    large: 'text-7xl',
+    xlarge: 'text-9xl'
+  };
+  
+  return (
+    <div className="relative inline-block">
+      <div className={`${sizeClasses[size]} filter brightness-0`} style={{ color: '#000000' }}>
+        {item.emoji}
+      </div>
+    </div>
+  );
+};
+
+export default function ShadowMatchGame() {
+  const [gameState, setGameState] = useState('menu');
+  const [players, setPlayers] = useState([]);
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [gameMode, setGameMode] = useState('name-match');
+  const [roundItems, setRoundItems] = useState([]);
+  const [currentItemIndex, setCurrentItemIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [memoryPhase, setMemoryPhase] = useState('study');
+  const [memoryTime, setMemoryTime] = useState(15);
+  const [currentStory, setCurrentStory] = useState(null);
+  const [storyPhase, setStoryPhase] = useState('reading');
+  const [colorMatchPairs, setColorMatchPairs] = useState([]);
+  const [selectedColorItems, setSelectedColorItems] = useState([]);
+  const [matchedPairs, setMatchedPairs] = useState([]);
+  const [peekItems, setPeekItems] = useState([]);
+  const [peekPhase, setPeekPhase] = useState('showing');
+  const [peekTime, setPeekTime] = useState(5);
+  const [peekShownItem, setPeekShownItem] = useState(null);
+
+  // Timer effect
+  useEffect(() => {
+    if (isTimerRunning && timeLeft > 0 && gameMode === 'speed') {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && gameMode === 'speed') {
+      endGame();
+    }
+  }, [isTimerRunning, timeLeft, gameMode]);
+
+  // Memory study timer
+  useEffect(() => {
+    if (memoryPhase === 'study' && memoryTime > 0 && gameMode === 'memory') {
+      const timer = setTimeout(() => setMemoryTime(memoryTime - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (memoryTime === 0 && memoryPhase === 'study' && gameMode === 'memory') {
+      setMemoryPhase('recall');
+    }
+  }, [memoryPhase, memoryTime, gameMode]);
+
+  // Peek-a-boo timer
+  useEffect(() => {
+    if (peekPhase === 'showing' && peekTime > 0 && gameMode === 'peek') {
+      const timer = setTimeout(() => setPeekTime(peekTime - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (peekTime === 0 && peekPhase === 'showing' && gameMode === 'peek') {
+      setPeekPhase('hidden');
+    }
+  }, [peekPhase, peekTime, gameMode]);
+
+  const addPlayer = () => {
+    if (newPlayerName.trim()) {
+      const player = {
+        id: Date.now(),
+        name: newPlayerName.trim(),
+        scores: { 'name-match': 0, 'speed': 0, 'memory': 0, 'story': 0, 'color': 0, 'peek': 0 },
+        gamesPlayed: 0
+      };
+      setPlayers([...players, player]);
+      setNewPlayerName('');
+    }
+  };
+
+  const startGame = (player, mode) => {
+    setCurrentPlayer(player);
+    setGameMode(mode);
+    setScore(0);
+    setCurrentItemIndex(0);
+    setShowFeedback(null);
+    setMatchedPairs([]);
+    setSelectedColorItems([]);
+    
+    if (mode === 'color') {
+      const shuffled = [...GAME_ITEMS].sort(() => Math.random() - 0.5).slice(0, 6);
+      const pairs = [];
+      shuffled.forEach(item => {
+        pairs.push({ ...item, type: 'color', id: `${item.id}-color` });
+        pairs.push({ ...item, type: 'shadow', id: `${item.id}-shadow` });
+      });
+      setColorMatchPairs(pairs.sort(() => Math.random() - 0.5));
+    } else if (mode === 'peek') {
+      const shuffled = [...GAME_ITEMS].sort(() => Math.random() - 0.5).slice(0, 8);
+      setPeekItems(shuffled);
+      setPeekPhase('showing');
+      setPeekTime(5);
+    } else if (mode === 'story') {
+      const story = HALLOWEEN_STORIES[Math.floor(Math.random() * HALLOWEEN_STORIES.length)];
+      setCurrentStory(story);
+      const storyItems = GAME_ITEMS.filter(item => story.items.includes(item.name));
+      setRoundItems(storyItems);
+      const allAnswers = storyItems.map(item => item.name).sort(() => Math.random() - 0.5);
+      setAnswers(allAnswers);
+      setStoryPhase('reading');
+    } else {
+      const shuffled = [...GAME_ITEMS].sort(() => Math.random() - 0.5).slice(0, 8);
+      setRoundItems(shuffled);
+      const allAnswers = shuffled.map(item => item.name).sort(() => Math.random() - 0.5);
+      setAnswers(allAnswers);
+    }
+    
+    if (mode === 'speed') {
+      setTimeLeft(60);
+      setIsTimerRunning(true);
+    } else if (mode === 'memory') {
+      setMemoryPhase('study');
+      setMemoryTime(15);
+    }
+    
+    setGameState('playing');
+  };
+
+  const handleColorMatch = (item) => {
+    if (matchedPairs.includes(item.id)) return;
+    
+    const newSelected = [...selectedColorItems, item];
+    setSelectedColorItems(newSelected);
+    
+    if (newSelected.length === 2) {
+      const [first, second] = newSelected;
+      const firstBase = first.id.split('-')[0];
+      const secondBase = second.id.split('-')[0];
+      
+      if (firstBase === secondBase && first.type !== second.type) {
+        playCorrectSound();
+        setMatchedPairs([...matchedPairs, first.id, second.id]);
+        setScore(score + 200);
+        setShowFeedback('correct');
+        
+        setTimeout(() => {
+          setSelectedColorItems([]);
+          setShowFeedback(null);
+          if (matchedPairs.length + 2 === colorMatchPairs.length) {
+            endGame();
+          }
+        }, 800);
+      } else {
+        playWrongSound();
+        setShowFeedback('wrong');
+        setTimeout(() => {
+          setSelectedColorItems([]);
+          setShowFeedback(null);
+        }, 800);
+      }
+    }
+  };
+
+  const handlePeekAnswer = (item) => {
+    if (!peekShownItem) return;
+    
+    const isCorrect = item.id === peekShownItem.id;
+    setSelectedAnswer(item.id);
+    setShowFeedback(isCorrect ? 'correct' : 'wrong');
+    
+    if (isCorrect) {
+      playCorrectSound();
+      setScore(score + 180);
+    } else {
+      playWrongSound();
+    }
+    
+    setTimeout(() => {
+      const remaining = peekItems.filter(i => i.id !== peekShownItem.id);
+      if (remaining.length > 0) {
+        setPeekItems(remaining);
+        setPeekPhase('showing');
+        setPeekTime(5);
+        setPeekShownItem(null);
+        setSelectedAnswer(null);
+        setShowFeedback(null);
+      } else {
+        endGame();
+      }
+    }, 1000);
+  };
+
+  const handleAnswer = (answer) => {
+    const currentItem = roundItems[currentItemIndex];
+    const isCorrect = answer === currentItem.name;
+    
+    setSelectedAnswer(answer);
+    setShowFeedback(isCorrect ? 'correct' : 'wrong');
+    
+    if (isCorrect) {
+      playCorrectSound();
+      const points = gameMode === 'speed' ? 10 : gameMode === 'memory' ? 150 : gameMode === 'story' ? 120 : 100;
+      setScore(score + points);
+    } else {
+      playWrongSound();
+    }
+    
+    setTimeout(() => {
+      if (currentItemIndex < roundItems.length - 1) {
+        setCurrentItemIndex(currentItemIndex + 1);
+        setSelectedAnswer(null);
+        setShowFeedback(null);
+      } else {
+        endGame();
+      }
+    }, 1000);
+  };
+
+  const endGame = () => {
+    setIsTimerRunning(false);
+    setGameState('results');
+    
+    setPlayers(players.map(p => {
+      if (p.id === currentPlayer.id) {
+        return {
+          ...p,
+          scores: { ...p.scores, [gameMode]: Math.max(p.scores[gameMode], score) },
+          gamesPlayed: p.gamesPlayed + 1
+        };
+      }
+      return p;
+    }));
+  };
+
+  const getLeaderboard = () => {
+    return [...players]
+      .map(p => ({
+        ...p,
+        totalScore: Object.values(p.scores).reduce((a, b) => a + b, 0)
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore);
+  };
+
+  if (gameState === 'menu') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-orange-900 text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-6xl font-bold mb-4 text-orange-400 animate-pulse">
+              🎃 Shadow Match Game 🎃
+            </h1>
+            <p className="text-2xl text-purple-200">Halloween Edition</p>
+          </div>
+
+          <div className="bg-black bg-opacity-50 rounded-lg p-6 mb-6 backdrop-blur">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Users className="w-6 h-6" />
+              Players
+            </h2>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={newPlayerName}
+                onChange={(e) => setNewPlayerName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+                placeholder="Enter player name..."
+                className="flex-1 px-4 py-2 rounded bg-purple-900 border border-purple-600 focus:outline-none focus:border-orange-400"
+              />
+              <button
+                onClick={addPlayer}
+                className="px-6 py-2 bg-orange-600 hover:bg-orange-700 rounded font-bold transition"
+              >
+                Add Player
+              </button>
+            </div>
+            
+            {players.length === 0 ? (
+              <p className="text-purple-300 text-center py-4">No players yet. Add players to start!</p>
+            ) : (
+              <div className="space-y-2">
+                {players.map(player => (
+                  <div key={player.id} className="bg-purple-900 bg-opacity-50 p-4 rounded">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-bold text-xl">{player.name}</span>
+                      <span className="text-sm text-purple-300">Games: {player.gamesPlayed}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => startGame(player, 'name-match')}
+                        className="px-3 py-2 bg-green-600 hover:bg-green-700 rounded text-xs font-bold transition flex items-center justify-center gap-1"
+                      >
+                        <Play className="w-3 h-3" />
+                        Name
+                      </button>
+                      <button
+                        onClick={() => startGame(player, 'speed')}
+                        className="px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-bold transition flex items-center justify-center gap-1"
+                      >
+                        <Zap className="w-3 h-3" />
+                        Speed
+                      </button>
+                      <button
+                        onClick={() => startGame(player, 'memory')}
+                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-xs font-bold transition flex items-center justify-center gap-1"
+                      >
+                        <Brain className="w-3 h-3" />
+                        Memory
+                      </button>
+                      <button
+                        onClick={() => startGame(player, 'story')}
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold transition flex items-center justify-center gap-1"
+                      >
+                        <BookOpen className="w-3 h-3" />
+                        Story
+                      </button>
+                      <button
+                        onClick={() => startGame(player, 'color')}
+                        className="px-3 py-2 bg-pink-600 hover:bg-pink-700 rounded text-xs font-bold transition flex items-center justify-center gap-1"
+                      >
+                        <Palette className="w-3 h-3" />
+                        Color
+                      </button>
+                      <button
+                        onClick={() => startGame(player, 'peek')}
+                        className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-xs font-bold transition flex items-center justify-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        Peek
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {players.length > 0 && (
+            <div className="bg-black bg-opacity-50 rounded-lg p-6 backdrop-blur">
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-yellow-400" />
+                Leaderboard
+              </h2>
+              <div className="space-y-2">
+                {getLeaderboard().map((player, index) => (
+                  <div key={player.id} className="flex items-center gap-4 bg-purple-900 bg-opacity-50 p-4 rounded">
+                    <div className="text-2xl font-bold w-8">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold">{player.name}</div>
+                      <div className="text-sm text-purple-300">
+                        Total: {player.totalScore} pts
+                      </div>
+                    </div>
+                    <div className="text-right text-xs grid grid-cols-2 gap-x-3">
+                      <div>Name: {player.scores['name-match']}</div>
+                      <div>Speed: {player.scores['speed']}</div>
+                      <div>Memory: {player.scores['memory']}</div>
+                      <div>Story: {player.scores['story']}</div>
+                      <div>Color: {player.scores['color']}</div>
+                      <div>Peek: {player.scores['peek']}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'playing') {
+    // Color Match Mode
+    if (gameMode === 'color') {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-pink-900 via-purple-900 to-black text-white p-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">{currentPlayer.name}</h2>
+                <p className="text-purple-300 flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  Color Match Mode
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-yellow-400">{score} pts</div>
+                <div className="text-sm text-purple-300">Matched: {matchedPairs.length / 2} / {colorMatchPairs.length / 2}</div>
+              </div>
+            </div>
+
+            <div className="bg-black bg-opacity-50 rounded-lg p-6 backdrop-blur">
+              <p className="text-center text-lg mb-6 text-pink-300">Tap matching pairs - one colorful item and its shadow!</p>
+              
+              <div className="grid grid-cols-4 gap-4">
+                {colorMatchPairs.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleColorMatch(item)}
+                    disabled={matchedPairs.includes(item.id)}
+                    className={`aspect-square rounded-lg p-4 transition-all transform hover:scale-105 flex items-center justify-center ${
+                      matchedPairs.includes(item.id)
+                        ? 'opacity-30 cursor-not-allowed'
+                        : selectedColorItems.find(i => i.id === item.id)
+                        ? 'ring-4 ring-yellow-400 scale-105'
+                        : 'hover:ring-2 ring-purple-400'
+                    }`}
+                    style={{
+                      backgroundColor: item.type === 'shadow' ? '#2a2a2a' : item.color
+                    }}
+                  >
+                    {item.type === 'shadow' ? (
+                      <ShadowSilhouette item={item} size="large" />
+                    ) : (
+                      <div className="text-6xl">
+                        {item.emoji}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {showFeedback && (
+                <div className={`text-center mt-6 text-3xl font-bold animate-bounce ${
+                  showFeedback === 'correct' ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {showFeedback === 'correct' ? '🎉 Perfect Match! 🎉' : '❌ Try Again! ❌'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Peek-a-Boo Mode
+    if (gameMode === 'peek') {
+      if (peekPhase === 'showing') {
+        if (!peekShownItem && peekItems.length > 0) {
+          setPeekShownItem(peekItems[Math.floor(Math.random() * peekItems.length)]);
+        }
+
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-yellow-900 via-orange-900 to-black text-white p-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-6">
+                <h2 className="text-3xl font-bold text-yellow-400 mb-2 flex items-center justify-center gap-2">
+                  <Sparkles className="w-8 h-8" />
+                  Peek-a-Boo Mode
+                </h2>
+                <p className="text-xl text-orange-300">Look closely and remember!</p>
+                <div className="text-5xl font-bold text-yellow-400 mt-4 animate-pulse">
+                  {peekTime}s
+                </div>
+              </div>
+
+              <div className="bg-black bg-opacity-60 rounded-lg p-12 backdrop-blur flex justify-center">
+                <ShadowSilhouette item={peekShownItem} size="xlarge" />
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (peekPhase === 'hidden') {
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black text-white p-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">{currentPlayer.name}</h2>
+                  <p className="text-purple-300 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Find the Hidden Item!
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-yellow-400">{score} pts</div>
+                  <div className="text-sm text-purple-300">Remaining: {peekItems.length}</div>
+                </div>
+              </div>
+
+              <div className="bg-black bg-opacity-50 rounded-lg p-6 backdrop-blur">
+                <p className="text-center text-lg mb-6 text-yellow-300">Which item did you just see?</p>
+                
+                <div className="grid grid-cols-4 gap-4">
+                  {peekItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handlePeekAnswer(item)}
+                      disabled={showFeedback !== null}
+                      className={`aspect-square rounded-lg p-4 transition-all transform hover:scale-105 ${
+                        showFeedback && selectedAnswer === item.id && item.id === peekShownItem?.id
+                          ? 'bg-green-600 ring-4 ring-green-400'
+                          : showFeedback && selectedAnswer === item.id
+                          ? 'bg-red-600 ring-4 ring-red-400'
+                          : 'bg-purple-700 hover:bg-purple-600'
+                      } disabled:cursor-not-allowed`}
+                    >
+                      <div className="text-5xl">{item.emoji}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {showFeedback && (
+                  <div className={`text-center mt-6 text-3xl font-bold animate-bounce ${
+                    showFeedback === 'correct' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {showFeedback === 'correct' ? '🎉 You Found It! 🎉' : '👻 Oops! Wrong One! 👻'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    const currentItem = roundItems[currentItemIndex];
+    
+    // Story Mode - Reading Phase
+    if (gameMode === 'story' && storyPhase === 'reading') {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black text-white p-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold text-orange-400 mb-2">{currentStory.title}</h2>
+              <p className="text-purple-300">Read the story carefully and remember the characters!</p>
+            </div>
+
+            <div className="bg-black bg-opacity-60 rounded-lg p-8 mb-6 backdrop-blur">
+              <div className="text-lg leading-relaxed mb-6">
+                {currentStory.story}
+              </div>
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={() => setStoryPhase('matching')}
+                className="px-8 py-4 bg-orange-600 hover:bg-orange-700 rounded-lg font-bold text-lg transition flex items-center gap-2 mx-auto"
+              >
+                <Play className="w-5 h-5" />
+                Start Matching!
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Memory Mode - Study Phase
+    if (gameMode === 'memory' && memoryPhase === 'study') {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-blue-900 via-purple-900 to-black text-white p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold text-blue-400 mb-2 flex items-center justify-center gap-2">
+                <Eye className="w-8 h-8" />
+                Memory Mode - Study Phase
+              </h2>
+              <p className="text-xl text-purple-300">Memorize these items!</p>
+              <div className="text-4xl font-bold text-yellow-400 mt-2">
+                {memoryTime}s remaining
+              </div>
+            </div>
+
+            <div className="bg-black bg-opacity-60 rounded-lg p-8 backdrop-blur">
+              <div className="grid grid-cols-4 gap-6">
+                {roundItems.map((item, index) => (
+                  <div key={item.id} className="text-center">
+                    <div className="text-6xl mb-2 animate-pulse">{item.emoji}</div>
+                    <div className="text-sm font-bold">{item.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Regular Playing Phase (for all modes after their intro phases)
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">{currentPlayer.name}</h2>
+              <p className="text-purple-300 flex items-center gap-2">
+                {gameMode === 'speed' && <><Zap className="w-4 h-4" />Speed Round</>}
+                {gameMode === 'name-match' && <><Play className="w-4 h-4" />Name Match</>}
+                {gameMode === 'memory' && <><Brain className="w-4 h-4" />Memory Mode - Recall</>}
+                {gameMode === 'story' && <><BookOpen className="w-4 h-4" />Story Mode</>}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-yellow-400">{score} pts</div>
+              {gameMode === 'speed' && (
+                <div className={`text-xl ${timeLeft < 10 ? 'text-red-400 animate-pulse' : 'text-purple-300'}`}>
+                  ⏱️ {timeLeft}s
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-black bg-opacity-50 rounded-lg p-8 mb-6 backdrop-blur">
+            <div className="text-center mb-4">
+              <p className="text-purple-300 mb-2">
+                Match {currentItemIndex + 1} of {roundItems.length}
+              </p>
+              <div className="w-full bg-purple-900 rounded-full h-2 mb-4">
+                <div 
+                  className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentItemIndex + 1) / roundItems.length) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center mb-8">
+              <div className="relative bg-gradient-to-br from-purple-800 to-indigo-900 rounded-2xl p-8 shadow-2xl">
+                <ShadowSilhouette item={currentItem} size="xlarge" />
+              </div>
+            </div>
+
+            {gameMode === 'memory' && memoryPhase === 'recall' && (
+              <div className="text-center mb-4 text-blue-400 flex items-center justify-center gap-2">
+                <EyeOff className="w-5 h-5" />
+                <span className="font-bold">Try to remember what you studied!</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              {answers.map((answer, index) => (
+                <button
+                  key={index}
+                  onClick={() => !showFeedback && handleAnswer(answer)}
+                  disabled={showFeedback !== null}
+                  className={`px-6 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 ${
+                    showFeedback && answer === currentItem.name
+                      ? 'bg-green-600'
+                      : showFeedback && selectedAnswer === answer
+                      ? 'bg-red-600'
+                      : 'bg-purple-700 hover:bg-purple-600'
+                  } disabled:cursor-not-allowed`}
+                >
+                  {answer}
+                  {showFeedback && answer === currentItem.name && ' ✓'}
+                  {showFeedback && selectedAnswer === answer && answer !== currentItem.name && ' ✗'}
+                </button>
+              ))}
+            </div>
+
+            {showFeedback && (
+              <div className={`text-center mt-6 text-2xl font-bold animate-pulse ${
+                showFeedback === 'correct' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {showFeedback === 'correct' ? '🎉 Correct!' : '👻 Wrong!'}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'results') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-orange-900 text-white p-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-5xl font-bold mb-6 text-yellow-400">
+            🎃 Game Over! 🎃
+          </h1>
+          
+          <div className="bg-black bg-opacity-50 rounded-lg p-8 mb-6 backdrop-blur">
+            <p className="text-2xl mb-4">{currentPlayer.name}</p>
+            <div className="text-6xl font-bold text-yellow-400 mb-4">{score}</div>
+            <p className="text-xl text-purple-300">
+              {gameMode === 'speed' && 'Speed Round Score'}
+              {gameMode === 'name-match' && 'Final Score'}
+              {gameMode === 'memory' && 'Memory Mode Score'}
+              {gameMode === 'story' && 'Story Mode Score'}
+              {gameMode === 'color' && 'Color Match Score'}
+              {gameMode === 'peek' && 'Peek-a-Boo Score'}
+            </p>
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => setGameState('menu')}
+              className="px-8 py-4 bg-orange-600 hover:bg-orange-700 rounded-lg font-bold text-lg transition flex items-center gap-2"
+            >
+              <RotateCcw className="w-5 h-5" />
+              Back to Menu
+            </button>
+            <button
+              onClick={() => startGame(currentPlayer, gameMode)}
+              className="px-8 py-4 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-lg transition flex items-center gap-2"
+            >
+              <Play className="w-5 h-5" />
+              Play Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
